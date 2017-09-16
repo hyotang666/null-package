@@ -1,7 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
-  :depends-on (:read-as-string :predcase :trestrul :alexandria :uiop :endaira)
+  :depends-on (:read-as-string :predcase :trestrul :alexandria :uiop)
   :components((:file "null-package")))
 
 ;; Perform method below is added by JINGOH.GENERATOR.

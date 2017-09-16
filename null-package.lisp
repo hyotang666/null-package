@@ -1,4 +1,4 @@
-(defpackage :null-package (:use :endaira :read-as-string :core-reader)
+(defpackage :null-package (:use :cl :read-as-string :core-reader)
   (:import-from :read-as-string #:*terminals*)
   (:export
     ;; main api
