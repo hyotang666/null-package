@@ -265,6 +265,14 @@
 			       (PRINT-UNINTERN i))))
 		(return t)))))
 
+(defun always-same-case-p(list)
+  (setf list (delete-if-not #'alpha-char-p list))
+  (or (null list)
+      (let((boolean
+	     (lower-case-p(car list))))
+	(loop :for char :in (cdr list)
+	      :always (eq boolean (lower-case-p char))))))
+
 (defun remove-escape(string)
   (uiop:while-collecting(acc)
     (do((index 0))
