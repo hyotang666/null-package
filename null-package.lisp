@@ -265,6 +265,27 @@
 			       (PRINT-UNINTERN i))))
 		(return t)))))
 
+(defun remove-escape(string)
+  (uiop:while-collecting(acc)
+    (do((index 0))
+      ((not(array-in-bounds-p string index)))
+      (case(char string index)
+	(#\\ ; single escape.
+	 (incf index 2))
+	(#\| ; multiple escape.
+	 (incf index)
+	 (do((char (char string index)(char string index)))
+	   ((char= #\| char)
+	    (incf index))
+	   (case char
+	     (#\\ ; single escape
+	      (incf index 2))
+	     (otherwise
+	       (incf index)))))
+	(otherwise
+	  (acc (char string index))
+	  (incf index))))))
+
 (defun char-swapcase(char)
   (if(lower-case-p char)
     (char-upcase char)
