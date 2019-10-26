@@ -13,8 +13,9 @@
 	    When list, included package's symbols are not uninterned.~%~
 	    When T, broken notation only uninterned."))
 
+(declaim(type (member :external :internal :present)
+	      *target-symbols*))
 (defparameter *target-symbols* :external)
-(declaim(type (member :external :internal :present) *target-symbols*))
 
 (defun targetp(status)
   (ecase *target-symbols*
