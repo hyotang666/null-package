@@ -14,8 +14,8 @@
 		   cons)
 	       *only-junk-p*))
 (defparameter *only-junk-p* nil
-  #.(format nil "When NIL, almost symbols are uninterned.~%~
-	    When list, included package's symbols are not uninterned.~%~
+  #.(format nil "When NIL, all symbols are uninterned except boolean and keyword.~%~
+	    When list, included package's symbols which satisfies TARGETP are not uninterned.~%~
 	    When T, broken notation only uninterned."))
 
 (declaim(type (member :external :internal :present)
