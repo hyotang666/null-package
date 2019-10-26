@@ -1,7 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
-  :version "0.5.0"
+  :version "1.0.0"
   :depends-on
   (
    :read-as-string
@@ -10,6 +10,7 @@
    :alexandria
    :uiop
    "core-reader"        ; Utilities for stream oriented functions.
+   "named-readtables"   ; Readtable manager.
    )
   :components((:file "null-package")))
 

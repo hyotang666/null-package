@@ -90,6 +90,7 @@
 (defreader #\;(&optional (stream *standard-input*))
   (read-line stream) ; discard.
   (%read-with-null-package stream))
+(defvar *labels*)
 
 (defreader #\#(&optional (stream *standard-input*))
   (multiple-value-bind(dispatcher num)(parse-dispatcher stream)
@@ -194,17 +195,31 @@
 ;;; (For detail, see placeholder #|0|# .)
 ;;; Fortunately, this made debug easy.
 ;;; To debug, use `%READ-WITH-NULL-PACKAGE`.
+;;;; READ-WITH-NULL-PACKAGE
 (defun read-with-null-package(&optional (stream *standard-input*)
 					(errorp T)
-					return)
-  (handler-case
-    (values(read-from-string #|0|#
-	     (with-output-to-string(*standard-output*)
-	       (%read-with-null-package stream))))
-    (end-of-file(condition)
-      (if errorp
-	(error condition)
-	return))))
+					return
+					recursivep)
+  (let((*readtable*
+	 (named-readtables:find-readtable 'null-package))
+       (char
+	 (peek-char t stream errorp return))
+       (*labels*
+	 (if recursivep
+	   *labels*
+	   (make-hash-table))))
+    (if(eq char return)
+      return
+      (let((reader
+	     (get-macro-character char)))
+	(if reader
+	  (read stream errorp return)
+	  (let((token
+		 (read-as-string:read-token stream)))
+	    (if(num-notation-p token)
+	      (with-input-from-string(stream token)
+		(read stream errorp return recursivep))
+	      (parse-token token))))))))
 
 (defun %read-with-null-package(&optional (stream *standard-input*))
   (funcall (gethash (peek-char T stream)*readers*
@@ -462,3 +477,105 @@
       (IS-FIRST-DIGIT? 1) ; skip sign.
       (IS-FIRST-DIGIT? 0))))
 
+;;;; MACRO-CHARACTERS
+(defun |'reader|(stream character)
+  (declare(ignore character))
+  `(#:quote ,(read-with-null-package stream t t t)))
+
+(defun |paren-reader|(stream character)
+  (declare(ignore character))
+  (loop :for char := (peek-char t stream)
+	;; End check.
+	:if (char= #\) char)
+	:do (read-char stream)
+	(return acc)
+	;; Nest check.
+	:else :if (char= #\( char)
+	:collect (|paren-reader| stream (read-char stream))
+	:into acc
+	;; Dotted list check.
+	:else :if (char= #\. char)
+	:do (read-char stream)
+	(let((elt
+	       (read-with-null-package stream t t t)))
+	  (read-char stream) ; discard close paren.
+	  (return (nreconc (nreverse acc)
+			   elt)))
+	;; The default.
+	:else :collect (read-with-null-package stream t t t)
+	:into acc))
+
+;;;; DISPATCH-MACRO-CHARACTERS
+(defun |#paren-reader|(stream character number)
+  (declare(ignore number))
+  (apply #'vector (|paren-reader| stream character)))
+
+(defun |#Sreader|(stream character number)
+  (declare(ignore number character))
+  (let((structure
+	 (progn (read-char stream)
+		(read stream)))
+       (args
+	 (|paren-reader| stream #\()))
+    (apply (intern (format nil "MAKE-~A"structure))
+	   args)))
+
+(defun |#=reader|(stream character number)
+  (declare(ignore character))
+  (unless number
+    (error "Missing label for #="))
+  (let((exp
+	 (read-with-null-package stream t t t)))
+    (setf (gethash number *labels*)
+	  exp)))
+
+(defun |##reader|(stream character number)
+  (declare(ignore stream))
+  (unless number
+    (error "Missing label for ##"))
+  (multiple-value-bind(value foundp)(gethash number *labels*)
+    (if foundp
+      value
+      (error "Reference to undefined label #~D~C"
+	     number
+	     character))))
+
+(defun |#+reader|(stream character number)
+  (declare(ignore character number))
+  (let((features
+	 (read stream t t t)))
+    (if(alexandria:featurep features)
+      (read-with-null-package stream t t t)
+      (let((*read-suppress*
+	     T))
+	(read stream t t t)
+	(values)))))
+
+(defun |#-reader|(stream character number)
+  (declare(ignore character number))
+  (let((features
+	 (read stream t t t)))
+    (if(not(alexandria:featurep features))
+      (read-with-null-package stream t t t)
+      (let((*read-suppress*
+	     T))
+	(read stream t t t)
+	(values)))))
+
+(defun |#'reader|(stream character number)
+  (declare(ignore character number))
+  `(#:function ,(read-with-null-package stream t t t)))
+
+;;;; NAMED-READTABLE
+(named-readtables:defreadtable null-package
+  (:merge :common-lisp)
+  (:macro-char #\( '|paren-reader|)
+  (:macro-char #\' '|'reader|)
+  (:dispatch-macro-char #\# #\( '|#paren-reader|)
+  (:dispatch-macro-char #\# #\S '|#Sreader|)
+  (:dispatch-macro-char #\# #\= '|#=reader|)
+  (:dispatch-macro-char #\# #\# '|##reader|)
+  (:dispatch-macro-char #\# #\+ '|#+reader|)
+  (:dispatch-macro-char #\# #\- '|#-reader|)
+  (:dispatch-macro-char #\# #\' '|#'reader|)
+  )
