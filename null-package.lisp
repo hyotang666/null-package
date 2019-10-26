@@ -8,6 +8,7 @@
     ))
 (in-package :null-package)
 
+;;;; VARIABLES
 (declaim (type (or (eql t)
 		   null
 		   cons)
