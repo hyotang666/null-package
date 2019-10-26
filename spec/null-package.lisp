@@ -5,7 +5,8 @@
 (setup :null-package)
 
 (requirements-about READ-WITH-NULL-PACKAGE
-		    :test #`(string-equal (prin1-to-string $1)(prin1-to-string $2)))
+		    :test (lambda($1 $2)
+			    (string-equal (prin1-to-string $1)(prin1-to-string $2))))
 
 ;;;; Description:
 ; Same with `CL:READ`, but symbol which is not keyword or boolean becomes uninterned symbol.
@@ -154,9 +155,10 @@
 ; Escaped.
 #?(with-input-from-string(s "foo\\bar")
     (read-with-null-package s))
-:satisfies #`(or ; Implementation dependent.
+:satisfies (lambda($1)
+	     (or ; Implementation dependent.
 	       (string-equal "#:|FOObAR|" (prin1-to-string $1))
-	       (string-equal "#:FOO\\bAR" (prin1-to-string $1)))
+	       (string-equal "#:FOO\\bAR" (prin1-to-string $1))))
 
 ; Vertical bar escaped.
 #?(with-input-from-string(s "|foo|")
@@ -236,9 +238,10 @@
 
 #?(with-input-from-string(s "#S(foo :bar bazz)")
     (read-with-null-package s))
-:satisfies #`(& (foo-p $result)
+:satisfies (lambda($result)
+	     (& (foo-p $result)
 		(string-equal (prin1-to-string '#:BAZZ)
-			      (prin1-to-string (foo-bar $result))))
+			      (prin1-to-string (foo-bar $result)))))
 
 ;;; Hexadecimal.
 #?(with-input-from-string(s "#x123")
@@ -464,7 +467,8 @@
     (with-input-from-string(s "car")
       (read-with-null-package s)))
 => #:CAR
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 ; When T, broken notation only uninterned.
 #?(let((*only-junk-p* T))
@@ -476,20 +480,23 @@
     (with-input-from-string(s "no-such-package:foo")
       (read-with-null-package s)))
 => #:FOO
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 #?(let((*only-junk-p* T))
     (with-input-from-string(s "null-package:not-external-symbol")
       (read-with-null-package s)))
 => #:NOT-EXTERNAL-SYMBOL
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 ; When list, included package's target symbols are interned.
 #?(let((*only-junk-p* '(:null-package)))
     (with-input-from-string(s "car")
       (read-with-null-package s)))
 => #:CAR
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 #?(let((*only-junk-p* '(:cl)))
     (with-input-from-string(s "car")
@@ -500,7 +507,8 @@
     (with-input-from-string(s "no-such-symbol-exists")
       (read-with-null-package s)))
 => #:NO-SUCH-SYMBOL-EXISTS
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 (requirements-about *TARGET-SYMBOLS*)
 
@@ -523,7 +531,8 @@
     (with-input-from-string(s "%read-with-null-package")
       (read-with-null-package s)))
 => #:%READ-WITH-NULL-PACKAGE
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 #?(let((*only-junk-p* '(:null-package))
        (*target-symbols* :internal))
@@ -536,7 +545,8 @@
     (with-input-from-string(s "car")
       (read-with-null-package s)))
 => #:CAR
-,:test #`(string= (prin1-to-string $1)(prin1-to-string $2))
+,:test (lambda($1 $2)
+	 (string= (prin1-to-string $1)(prin1-to-string $2)))
 
 #?(let((*only-junk-p* '(:null-package))
        (*target-symbols* :present))
