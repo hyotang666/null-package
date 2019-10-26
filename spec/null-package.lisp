@@ -235,6 +235,7 @@
 #?(defstruct foo bar) => FOO
 ,:lazy nil
 ,:test eq
+,:ignore-signals warning ; <--- for clisp.
 
 #?(with-input-from-string(s "#S(foo :bar bazz)")
     (read-with-null-package s))
