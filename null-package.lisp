@@ -8,6 +8,10 @@
     ))
 (in-package :null-package)
 
+(declaim (type (or (eql t)
+		   null
+		   cons)
+	       *only-junk-p*))
 (defparameter *only-junk-p* nil
   #.(format nil "When NIL, almost symbols are uninterned.~%~
 	    When list, included package's symbols are not uninterned.~%~
