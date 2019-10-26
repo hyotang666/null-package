@@ -124,8 +124,6 @@
 ; The default is :external.
 ; See `*TARGET-SYMBOLS*`
 
-; `NULL-PACKAGE::*READERS*` for internal use.
-
 ;;;; Side-Effects:
 ; Consuming STREAM's contents.
 
