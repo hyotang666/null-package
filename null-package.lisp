@@ -70,7 +70,7 @@
 	  (symbol))
       (if(string= collons "")
 	(shiftf symbol package "")
-	(setf symbol (convert-case(read-as-string))))
+	(setf symbol (convert-case(read-as-string:read-as-string))))
       (case(length collons)
 	(0
 	 (assert(string= package ""))
