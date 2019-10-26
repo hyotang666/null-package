@@ -256,6 +256,55 @@
 			       (PRINT-UNINTERN i))))
 		(return t)))))
 
+(defun parse-token(token)
+  (with-input-from-string(*standard-input* token)
+    (let*((pred
+	    (core-reader:char-pred #\:))
+	  (package
+	    (convert-case(core-reader:read-string-till pred)))
+	  (collons
+	    (core-reader:read-string-till (complement pred)
+					  *standard-input*
+					  nil
+					  ""))
+	  (symbol))
+      (if(string= collons "")
+	(shiftf symbol package "")
+	(setf symbol (convert-case(read-as-string))))
+      (case(length collons)
+	(0
+	 (assert(string= package ""))
+	 (cond
+	   ;; boolean.
+	   ((member symbol '(nil t)
+		    :test #'string=)
+	    (values(intern symbol)))
+	   (t
+	     (symbol<=name symbol))))
+	(1
+	 (cond
+	   ;; Keyword
+	   ((string= "" package)
+	    (values(intern symbol :keyword)))
+	   ;; Invalid.
+	   ((or (not(find-package package))
+		(not(eq :external (nth-value 1 (find-symbol symbol package)))))
+	    (make-symbol symbol))
+	   (t
+	     (symbol<=name symbol (find-package package)))))
+	(2
+	 (cond
+	   ;; Keyword
+	   ((string= "" package)
+	    (values(intern symbol :keyword)))
+	   ;; Invalid
+	   ((find-package package)
+	    (make-symbol symbol))
+	   (t
+	     (symbol<=name symbol (find-package package)))))
+	(otherwise
+	  (make-symbol symbol))))))
+
 (defun symbol<=name(name &optional(*package* *package*))
   (etypecase *only-junk-p*
     ((EQL T)
