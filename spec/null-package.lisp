@@ -233,7 +233,7 @@
 
 ;;; Structure
 #?(defstruct foo bar) => FOO
-,:lazy nil
+,:lazy t
 ,:test eq
 ,:ignore-signals warning ; <--- for clisp.
 
