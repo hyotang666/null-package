@@ -1,6 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
+  :version "0.0.0"
   :depends-on (:read-as-string :predcase :trestrul :alexandria :uiop)
   :components((:file "null-package")))
 

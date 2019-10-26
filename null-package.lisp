@@ -265,6 +265,11 @@
 			       (PRINT-UNINTERN i))))
 		(return t)))))
 
+(defun char-swapcase(char)
+  (if(lower-case-p char)
+    (char-upcase char)
+    (char-downcase char)))
+
 ; BNF
 ; int := sign? digit+ .?
 ; rational := sign? digit+ / digit+
