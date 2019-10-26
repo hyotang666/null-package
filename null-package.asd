@@ -1,14 +1,12 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
-  :version "1.0.0"
+  :version "1.1.0"
   :depends-on
   (
-   :read-as-string
-   :predcase
-   :trestrul
-   :alexandria
-   :uiop
+   "read-as-string"     ; Reading one s-expression as string.
+   "alexandria"         ; Public domain utilities, especially for FEATUREP.
+   "uiop"               ; Utilities.
    "core-reader"        ; Utilities for stream oriented functions.
    "named-readtables"   ; Readtable manager.
    )
