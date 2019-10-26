@@ -44,15 +44,6 @@
 (defparameter *target-symbols* :external)
 (declaim(type (member :external :internal :present) *target-symbols*))
 
-(defun symbol<=name(name)
-  (case *only-junk-p*
-    ((T)(read-from-string name))
-    ((NIL)(make-symbol name))
-    (otherwise(dolist(package *only-junk-p* (make-symbol name))
-		(multiple-value-bind(symbol status)(find-symbol name package)
-		  (when(targetp status)
-		    (return symbol)))))))
-
 (defun targetp(status)
   (ecase *target-symbols*
     (:external (eq :external status))
@@ -264,6 +255,18 @@
 			       (print(read-from-string string))
 			       (PRINT-UNINTERN i))))
 		(return t)))))
+
+(defun symbol<=name(name &optional(*package* *package*))
+  (etypecase *only-junk-p*
+    ((EQL T)
+     (values(intern name)))
+    (NULL
+     (make-symbol name))
+    (CONS
+      (dolist(package *only-junk-p* (make-symbol name))
+	(multiple-value-bind(symbol status)(find-symbol name package)
+	  (when(targetp status)
+	    (return symbol)))))))
 
 (defun convert-case(string)
   (flet((convert-all(converter)
