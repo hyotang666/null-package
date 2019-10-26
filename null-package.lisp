@@ -351,11 +351,117 @@
   (declare(ignore character number))
   `(#:function ,(read-with-null-package stream t t t)))
 
+;;;; BACKQUOTE
+(defun |`reader|(stream character)
+  (let((*readtable*
+	 (copy-readtable nil)))
+    (values (read-from-string
+	      (format nil "~C~A"
+		      character
+		      (read-with-replace-token stream))))))
+
+(defun read-with-replace-token(&optional (*standard-input* *standard-input*))
+  (let((*readtable*
+	 (named-readtables:find-readtable 'replacer))
+       (char
+	 (peek-char nil *standard-input*)))
+    (if(get-macro-character char)
+      (read)
+      (if(read-as-string::whitecharp char)
+	(string (read-char))
+	(let((token
+	       (read-as-string:read-token)))
+	  (if(num-notation-p token)
+	    token
+	    (prin1-to-string(parse-token token))))))))
+
+(defun |`replacer|(stream character)
+  (format nil "~C~A"
+	  character
+	  (read-with-replace-token stream)))
+
+(defun |'replacer|(stream character)
+  (declare(ignore character))
+  (format nil "(~A ~A)"
+	  (prin1-to-string(parse-token "quote"))
+	  (read-with-replace-token stream)))
+
+(defun |paren-replacer|(stream character)
+  (declare(ignore character))
+  (let((*print-pretty*)) ; For CLISP.
+    (format nil "(~{~A~}"
+	    (loop :for char = (peek-char nil stream)
+		  :if (char= #\) char)
+		  :collect (read-char stream)
+		  :and :do (loop-finish)
+		  :else :if (char= #\. char)
+		  :collect (read-char stream)
+		  :else :collect (read-with-replace-token stream)))))
+
+(defun |,replacer|(stream character)
+  (format nil "~C~@[~C~]"
+	  character
+	  (let((char
+		 (peek-char nil stream)))
+	    (when (char= #\@ char)
+	      (read-char stream)))))
+
+(defun |#'replacer|(stream character number)
+  (declare(ignore character number))
+  (format nil "(~A ~A)"
+	  (prin1-to-string(parse-token "function"))
+	  (read-with-replace-token stream)))
+
+(defun |#paren-replacer|(stream character number)
+  (format nil "#~@[~D~]~A"
+	  number
+	  (|paren-replacer| stream character)))
+
+(defun |#Sreplacer|(stream character number)
+  (unless(char= #\( (peek-char nil stream))
+    (error "Invalid notation ~S below #S" (read-char stream)))
+  (read-char stream) ; discard open paren.
+  (format nil "#~@[~D~]~C(~S~A"
+	  number
+	  character
+	  (let((*readtable*
+		 (copy-readtable nil)))
+	    (read stream))
+	  (let((exp
+		 (|paren-replacer| stream #\()))
+	    (if(char= #\) (char exp 1))
+	      #\)
+	      (progn (setf (char exp 0) #\space)
+		     exp)))))
+
+(defun |#Areplacer|(stream character number)
+  (format nil "#~@[~D~]~C~A"
+	  number
+	  character
+	  (if(char= #\( (peek-char nil stream))
+	    (|paren-replacer| stream (read-char stream))
+	    (prin1-to-string(symbol<=name(convert-case(read-as-string:read-token stream)))))))
+
 ;;;; NAMED-READTABLE
+(named-readtables:defreadtable replacer
+  (:merge read-as-string:as-string)
+  (:macro-char #\( '|paren-replacer|)
+  (:macro-char #\` '|`replacer|)
+  (:macro-char #\, '|,replacer|)
+  (:macro-char #\' '|'replacer|)
+  )
+
+(read-as-string:set-dispatcher #\( '|#paren-replacer|)
+(read-as-string:set-dispatcher #\S '|#Sreplacer|)
+(read-as-string:set-dispatcher #\A '|#Areplacer|)
+(read-as-string:set-dispatcher #\' '|#'replacer|)
+
 (named-readtables:defreadtable null-package
   (:merge :common-lisp)
   (:macro-char #\( '|paren-reader|)
   (:macro-char #\' '|'reader|)
+  #+(or clisp ecl)
+  (:macro-char #\` '|`reader|)
   (:dispatch-macro-char #\# #\( '|#paren-reader|)
   (:dispatch-macro-char #\# #\S '|#Sreader|)
   (:dispatch-macro-char #\# #\= '|#=reader|)
@@ -364,3 +470,4 @@
   (:dispatch-macro-char #\# #\- '|#-reader|)
   (:dispatch-macro-char #\# #\' '|#'reader|)
   )
+
