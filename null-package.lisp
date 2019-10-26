@@ -265,6 +265,44 @@
 			       (PRINT-UNINTERN i))))
 		(return t)))))
 
+(defun convert-case(string)
+  (flet((convert-all(converter)
+	  (uiop:reduce/strcat
+	    (uiop:while-collecting(acc)
+	      (do((index 0))
+		((not(array-in-bounds-p string index)))
+		(case(char string index)
+		  (#\\ ; single escape.
+		   (acc(char string (incf index)))
+		   (incf index))
+		  (#\| ; multiple escape.
+		   (incf index)
+		   (do((char (char string index) (char string index)))
+		     ((char= #\| char)
+		      (incf index))
+		     (case char
+		       (#\\ ; single escape.
+			(acc char)
+			(acc (char string (incf index)))
+			(incf index))
+		       (otherwise
+			 (acc char)
+			 (incf index)))))
+		  (otherwise
+		    (acc (funcall converter (char string index)))
+		    (incf index))))))))
+    (ecase(readtable-case *readtable*)
+      (:upcase
+	(convert-all #'char-upcase))
+      (:downcase
+	(convert-all #'char-downcase))
+      (:preserve
+	(convert-all #'identity))
+      (:invert
+	(if(always-same-case-p(remove-escape string))
+	  (convert-all #'char-swapcase)
+	  string)))))
+
 (defun always-same-case-p(list)
   (setf list (delete-if-not #'alpha-char-p list))
   (or (null list)
