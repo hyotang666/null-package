@@ -301,6 +301,15 @@
     (read-with-null-package s))
 => `(#:HOGE ,@(#:CDR (#:QUOTE(#:A #:B #:C))))
 
+#?(with-input-from-string(s "( ; comment
+			       )")
+    (read-with-null-package s))
+=> NIL
+
+#?(with-input-from-string(s "( #|comment in paren. |#)")
+    (read-with-null-package s))
+=> NIL
+
 (requirements-about NUM-NOTATION-P)
 
 ;;;; Description:

@@ -1,7 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package.test
-  :version "0.0.4"
+  :version "0.0.5"
   :depends-on
   (:jingoh "null-package" "bnf")
   :components
