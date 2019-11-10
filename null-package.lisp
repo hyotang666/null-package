@@ -98,7 +98,7 @@
 	   ((string= "" package)
 	    (values(intern symbol :keyword)))
 	   ;; Invalid
-	   ((find-package package)
+	   ((not(find-package package))
 	    (make-symbol symbol))
 	   (t
 	     (symbol<=name symbol (find-package package)))))
