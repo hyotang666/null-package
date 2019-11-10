@@ -1,7 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
-  :version "1.3.0"
+  :version "1.3.1"
   :depends-on
   (
    "read-as-string"     ; Reading one s-expression as string.
@@ -38,8 +38,8 @@
     (let ((args (jingoh.args keys)))
       (declare (special args))
       (call-next-method))))
-;; Enable importing spec documentations.
-(let ((system (find-system "jingoh.documentizer" nil)))
+;; Comment out importing spec documentations due to circular dependencies.
+#++(let ((system (find-system "jingoh.documentizer" nil)))
   (when (and system (not (featurep :clisp)))
     (load-system system)
     (defmethod operate :around
