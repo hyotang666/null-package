@@ -111,11 +111,21 @@
 => NIL
 
 ; `*read-eval*`
+; If `*read-eval*` is true, read form is evaluated.
+; In this case, standard common lisp readtable is used.
+#?(let((*read-eval*
+	 T))
+    (with-input-from-string(s "#.(+ 1 2 3)")
+      (read-with-null-package s)))
+=> 6
+
 #?(let((*read-eval* t))
     (with-input-from-string(s "#.:error")
       (read-with-null-package s)))
 => :ERROR
 ,:test eq
+
+; If `*read-eval*` is NIL, an error is signaled.
 #?(let((*read-eval* nil))
     (with-input-from-string(s "#.:error")
       (read-with-null-package s)))

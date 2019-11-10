@@ -1,7 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
-  :version "1.2.4"
+  :version "1.3.0"
   :depends-on
   (
    "read-as-string"     ; Reading one s-expression as string.

@@ -372,6 +372,16 @@
   (declare(ignore character number))
   `(#:function ,(read-with-null-package stream t t t)))
 
+(defun |#.reader|(stream character number)
+  (declare(ignore character number))
+  (case *read-eval*
+    ((NIL)
+     (error "Can not read #. while *READ-EVAL* is NIL."))
+    (otherwise
+      (let((*readtable*
+	     (copy-readtable nil)))
+	(eval (read stream t t t))))))
+
 ;;;; BACKQUOTE
 (defun |`reader|(stream character)
   (let((*readtable*
@@ -490,5 +500,6 @@
   (:dispatch-macro-char #\# #\+ '|#+reader|)
   (:dispatch-macro-char #\# #\- '|#-reader|)
   (:dispatch-macro-char #\# #\' '|#'reader|)
+  (:dispatch-macro-char #\# #\. '|#.reader|)
   )
 
