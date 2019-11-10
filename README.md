@@ -1,4 +1,4 @@
-# NULL-PACKAGE - READ but not intern symbol.
+# NULL-PACKAGE 1.2.3
 
 * Current lisp world
 Having strong package system.

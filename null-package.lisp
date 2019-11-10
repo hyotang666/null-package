@@ -269,26 +269,41 @@
 
 (defun |paren-reader|(stream character)
   (declare(ignore character))
-  (loop :for char := (peek-char t stream)
-	;; End check.
-	:if (char= #\) char)
-	:do (read-char stream)
-	(return acc)
-	;; Nest check.
-	:else :if (char= #\( char)
-	:collect (|paren-reader| stream (read-char stream))
-	:into acc
-	;; Dotted list check.
-	:else :if (char= #\. char)
-	:do (read-char stream)
-	(let((elt
-	       (read-with-null-package stream t t t)))
-	  (read-char stream) ; discard close paren.
-	  (return (nreconc (nreverse acc)
-			   elt)))
-	;; The default.
-	:else :collect (read-with-null-package stream t t t)
-	:into acc))
+  (do((char(peek-char t stream)(peek-char t stream))
+      (acc))
+    ((char= #\) char)
+     (read-char stream) ; discard close paren.
+     (nreverse acc))
+    (case char
+      (#\( ; nested.
+       (push (|paren-reader| stream (read-char stream))
+	     acc))
+      (#\. ; dot list.
+       (read-char stream) ; discard #\. character.
+       (let*((elt
+	       (read-with-null-package stream t t t))
+	     (char
+	       (peek-char t stream)))
+	 (if(char= #\) char)
+	   (return(nreconc acc elt))
+	   (let((macro-char
+		  (get-macro-character char)))
+	     (if macro-char
+	       (multiple-value-call (lambda(&optional (return nil suppliedp))
+				      (when (or return suppliedp)
+					(error "More than one element follow . in list.")))
+		 (funcall macro-char stream (read-char stream)))
+	       (error "More than one element follow . in list."))))))
+      (otherwise
+	(let((macro-char
+	       (get-macro-character char)))
+	  (if macro-char
+	    (multiple-value-call (lambda(&optional (return nil suppliedp))
+				   (when (or return suppliedp)
+				     (push return acc)))
+	      (funcall macro-char stream (read-char stream)))
+	    (push (read-with-null-package stream t t t)
+		  acc)))))))
 
 ;;;; DISPATCH-MACRO-CHARACTERS
 (defun |#paren-reader|(stream character number)
