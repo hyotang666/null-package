@@ -48,13 +48,19 @@
       (let((reader
 	     (get-macro-character char)))
 	(if reader
-	  (read stream errorp return)
-	  (let((token
-		 (read-as-string:read-token stream)))
-	    (if(num-notation-p token)
-	      (with-input-from-string(stream token)
-		(read stream errorp return recursivep))
-	      (parse-token token))))))))
+	  (let((elt
+		 (read stream errorp return)))
+	    (unless *read-suppress*
+	      elt))
+	  (let*((token
+		  (read-as-string:read-token stream))
+		(elt
+		  (if(num-notation-p token)
+		    (with-input-from-string(stream token)
+		      (read stream errorp return recursivep))
+		    (parse-token token))))
+	    (unless *read-suppress*
+	      elt)))))))
 
 (defun parse-token(token)
   (with-input-from-string(*standard-input* token)

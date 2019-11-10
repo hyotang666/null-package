@@ -103,6 +103,13 @@
 
 ; `*read-default-float-format*`
 
+; `*read-suppress*`
+#?(let((*read-suppress*
+	 T))
+    (with-input-from-string(s ":dummy")
+      (read-with-null-package s)))
+=> NIL
+
 ; `*read-eval*`
 #?(let((*read-eval* t))
     (with-input-from-string(s "#.:error")
