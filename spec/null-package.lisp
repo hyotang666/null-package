@@ -234,6 +234,7 @@
 ,:lazy t
 ,:test eq
 ,:ignore-signals warning ; <--- for clisp.
+,:before (mapc #'fmakunbound '(copy-foo foo-p foo-bar (setf foo-bar) make-foo))
 
 #?(with-input-from-string(s "#S(foo :bar bazz)")
     (read-with-null-package s))
