@@ -2,6 +2,9 @@
 (in-package :asdf)
 (defsystem :null-package
   :version "1.3.1"
+  :author "SATO Shinichi"
+  :license "MIT"
+  :description "Safe and robust S-Expression reader. Useful to read from unfailthfull stream/socket."
   :depends-on
   (
    "read-as-string"     ; Reading one s-expression as string.
