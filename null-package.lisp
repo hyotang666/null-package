@@ -482,10 +482,13 @@
   (:macro-char #\' '|'replacer|)
   )
 
-(read-as-string:set-dispatcher #\( '|#paren-replacer|)
-(read-as-string:set-dispatcher #\S '|#Sreplacer|)
-(read-as-string:set-dispatcher #\A '|#Areplacer|)
-(read-as-string:set-dispatcher #\' '|#'replacer|)
+(let((*readtable*
+       (named-readtables:find-readtable 'replacer)))
+  (read-as-string:set-dispatcher #\( '|#paren-replacer|)
+  (read-as-string:set-dispatcher #\S '|#Sreplacer|)
+  (read-as-string:set-dispatcher #\A '|#Areplacer|)
+  (read-as-string:set-dispatcher #\' '|#'replacer|)
+  )
 
 (named-readtables:defreadtable null-package
   (:merge :common-lisp)
