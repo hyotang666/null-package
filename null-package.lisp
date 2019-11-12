@@ -162,12 +162,26 @@
 	  string)))))
 
 (defun always-same-case-p(list)
-  (setf list (delete-if-not #'alpha-char-p list))
-  (or (null list)
-      (let((boolean
-	     (lower-case-p(car list))))
-	(loop :for char :in (cdr list)
-	      :always (eq boolean (lower-case-p char))))))
+  (labels((rec(list boolean)
+	    (if(endp list)
+	      T
+	      (body (car list)(cdr list) boolean)))
+	  (body(char rest boolean)
+	    (cond
+	      ;; Skip
+	      ((not(alpha-char-p char))
+	       (rec rest boolean))
+	      ((eq (lower-case-p char)
+		   boolean)
+	       (rec rest boolean))
+	      (T NIL))))
+    (let((position
+	   (position-if #'alpha-char-p list)))
+      (if(null position)
+	T
+	(rec (nthcdr (1+ position)
+		     list)
+	     (lower-case-p (nth position list)))))))
 
 (defun remove-escape(string)
   (uiop:while-collecting(acc)
