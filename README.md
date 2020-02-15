@@ -18,6 +18,10 @@ In such cases, not interning, just making symbol (i.e. uninterned symbol) is use
 => #:HOGE
 ```
 
+## Alternatives.
+NULL-PACKAGE aims to be used for static analyzing rather than security.
+If you want more strict one for security reason, [SAFE-READ](https://github.com/phoe/safe-read) is recommended.
+
 ## Memo
 In fact, ideal syntax was like below.
 
