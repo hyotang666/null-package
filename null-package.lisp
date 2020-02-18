@@ -138,9 +138,10 @@
       (:downcase (convert-all #'char-downcase))
       (:preserve (convert-all #'identity))
       (:invert
-       (if (always-same-case-p (remove-escape string))
-           (convert-all #'char-swapcase)
-           string)))))
+       (convert-all
+         (if (always-same-case-p (remove-escape string))
+             #'char-swapcase
+             #'identity))))))
 
 (defun always-same-case-p (list)
   (labels ((rec (list boolean)
