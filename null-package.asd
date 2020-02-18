@@ -1,7 +1,7 @@
 ; vim: ft=lisp et
 (in-package :asdf)
 (defsystem :null-package
-  :version "1.3.5"
+  :version "1.3.6"
   :author "SATO Shinichi"
   :license "MIT"
   :description "Safe and robust S-Expression reader. Useful to read from unfailthfull stream/socket."

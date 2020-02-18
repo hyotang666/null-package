@@ -330,6 +330,10 @@
     (read-with-null-package s))
 => NIL
 
+#?(with-input-from-string(s ":hoge")
+    (read-with-null-package s nil #\h))
+=> :HOGE
+
 (requirements-about NUM-NOTATION-P)
 
 ;;;; Description:

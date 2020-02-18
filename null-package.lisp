@@ -36,13 +36,16 @@
 (defun read-with-null-package
        (&optional (stream *standard-input*) (errorp t) return recursivep)
   (let ((*readtable* (named-readtables:find-readtable 'null-package))
-        (char (peek-char t stream errorp return))
         (*labels*
          (if recursivep
              *labels*
              (make-hash-table))))
-    (if (eq char return)
-        return
+    (handler-case (peek-char t stream)
+      (end-of-file (c)
+        (if errorp
+            (error c)
+            return))
+      (:no-error (char)
         (let ((reader (get-macro-character char)))
           (if reader
               (let ((elt (read stream errorp return)))
@@ -55,7 +58,7 @@
                             (read stream errorp return recursivep))
                           (parse-token token))))
                 (unless *read-suppress*
-                  elt)))))))
+                  elt))))))))
 
 (defun parse-token (token)
   (with-input-from-string (*standard-input* token)
