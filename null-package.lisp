@@ -33,6 +33,11 @@
 
 ;;;; READ-WITH-NULL-PACKAGE
 
+(declaim
+ (ftype (function (&optional (or null stream) boolean t boolean)
+         (values t &optional))
+        read-with-null-package))
+
 (defun read-with-null-package (&optional stream (errorp t) return recursivep)
   (let ((*readtable* (named-readtables:find-readtable 'null-package))
         (*labels*
