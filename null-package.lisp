@@ -53,8 +53,7 @@
             (let* ((token (read-as-string:read-token))
                    (elt
                     (if (num-notation-p token)
-                        (with-input-from-string (stream token)
-                          (read stream errorp return recursivep))
+                        (read-from-string token errorp return)
                         (parse-token token))))
               (unless *read-suppress*
                 elt)))))))
