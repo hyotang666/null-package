@@ -18,9 +18,70 @@ In such cases, not interning, just making symbol (i.e. uninterned symbol) is use
 => #:HOGE
 ```
 
+For details, see [spec file.](spec/null-package.lisp)
+
 ## Alternatives.
 NULL-PACKAGE aims to be used for static analyzing rather than security.
 If you want more strict one for security reason, [SAFE-READ](https://github.com/phoe/safe-read) is recommended.
+
+### Differences against SAFE-READ.
+* Can read atom, include "nil".
+
+```lisp
+(with-input-from-string (s "nil")
+  (read-with-null-package s))
+=> NIL
+
+(with-input-from-string (s "nil")
+  (safe-read s))
+:signals malformed-input
+
+(with-input-from-string (s "()")
+  (safe-read s))
+=> NIL
+   NIL
+```
+
+* Can accept all macro characters.
+
+```lisp
+(with-input-from-string (s "(#(a))")
+  (read-with-null-package s))
+=> (#(#:A))
+
+(with-input-from-string (s "(#(a))")
+  (safe-read s))
+:signals malformed-input
+```
+
+* Can accept package-qualified names.
+
+```lisp
+(with-input-from-string (s "(asdf:system)")
+  (read-with-null-package s))
+=> (#:SYSTEM)
+
+(with-input-from-string (s "(asdf:system)")
+  (safe-read s))
+:signals malformed-input
+```
+
+* Can control intern or not.
+
+```lisp
+(let ((*only-junk-p* t))
+  (with-input-from-string(s "(car (cdr (list a b no-such-package:c)))")
+    (read-with-null-package s)))
+=> (CAR (CDR (LIST A B #:C)))
+
+(defpackage test (:use :cl) (:export car cdr))
+
+(let ((*terget-symbols* :external) ; The default though.
+      (*only-junk-p* '(:test)))
+  (with-input-from-string(s "(car (cdr (list a b no-such-package:c)))")
+    (read-with-null-package s)))
+=> (CAR (CDR (#:LIST #:A #:B #:C)))
+```
 
 ## Memo
 In fact, ideal syntax was like below.
