@@ -46,19 +46,18 @@
             (error c)
             return))
       (:no-error (char)
-        (let ((reader (get-macro-character char)))
-          (if reader
-              (let ((elt (read nil errorp return)))
-                (unless *read-suppress*
-                  elt))
-              (let* ((token (read-as-string:read-token))
-                     (elt
-                      (if (num-notation-p token)
-                          (with-input-from-string (stream token)
-                            (read stream errorp return recursivep))
-                          (parse-token token))))
-                (unless *read-suppress*
-                  elt))))))))
+        (if (get-macro-character char)
+            (let ((elt (read nil errorp return)))
+              (unless *read-suppress*
+                elt))
+            (let* ((token (read-as-string:read-token))
+                   (elt
+                    (if (num-notation-p token)
+                        (with-input-from-string (stream token)
+                          (read stream errorp return recursivep))
+                        (parse-token token))))
+              (unless *read-suppress*
+                elt)))))))
 
 (defun parse-token (token)
   (with-input-from-string (*standard-input* token)
