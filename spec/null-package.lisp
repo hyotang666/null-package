@@ -8,8 +8,8 @@
 (setup :null-package)
 
 (requirements-about READ-WITH-NULL-PACKAGE
-		    :test (lambda($1 $2)
-			    (string-equal (prin1-to-string $1)(prin1-to-string $2))))
+		    :test (lambda ($1 $2)
+			    (string-equal (prin1-to-string $1) (prin1-to-string $2))))
 
 ;;;; Description:
 ; Same with `CL:READ`, but symbol which is not keyword or boolean becomes uninterned symbol.
@@ -40,21 +40,21 @@
 ; So uninterning *ANY* symbols can not keep portability.
 ; `NULL-PACKAGE` choose to accept exceptions for usability, and if so why does we hesitate to add another exception?
 
-#?(with-input-from-string(s "hoge")
+#?(with-input-from-string (s "hoge")
     (read-with-null-package s))
 => #:HOGE
 
-#?(with-input-from-string(s ":hoge")
+#?(with-input-from-string (s ":hoge")
     (read-with-null-package s))
 => :HOGE
 ,:test eq
 
-#?(with-input-from-string(s "nil")
+#?(with-input-from-string (s "nil")
     (read-with-null-package s))
 => NIL
 ,:test eq
 
-#?(with-input-from-string(s "T")
+#?(with-input-from-string (s "T")
     (read-with-null-package s))
 => T
 ,:test eq
@@ -65,27 +65,27 @@
 ;;;; Arguments and Values:
 
 ; stream := Input-stream otherwise error.
-#?(with-output-to-string(out)
+#?(with-output-to-string (out)
     (read-with-null-package out))
 :signals error
 
 ; errorp := Boolean to specify signals error when reach end of file.
 ; The default is T.
-#?(with-input-from-string(s "")
+#?(with-input-from-string (s "")
     (read-with-null-package s))
 :signals end-of-file
-#?(with-input-from-string(s "")
+#?(with-input-from-string (s "")
     (read-with-null-package s nil))
 => NIL
 ,:test eq
 
 ; return := T to specify return value when reach end of file.
 ; The default is nil.
-#?(with-input-from-string(s "")
+#?(with-input-from-string (s "")
     (read-with-null-package s nil))
 => NIL
 ,:test eq
-#?(with-input-from-string(s "")
+#?(with-input-from-string (s "")
     (read-with-null-package s nil :default))
 => :DEFAULT
 ,:test eq
@@ -94,12 +94,12 @@
 
 ;;;; Affected By:
 ; `*read-base*`
-#?(with-input-from-string(s "f")
+#?(with-input-from-string (s "f")
     (read-with-null-package s))
 => #:F
 
-#?(let((*read-base* 16))
-    (with-input-from-string(s "f")
+#?(let ((*read-base* 16))
+    (with-input-from-string (s "f")
       (read-with-null-package s)))
 => 15
 ,:test eql
@@ -107,30 +107,28 @@
 ; `*read-default-float-format*`
 
 ; `*read-suppress*`
-#?(let((*read-suppress*
-	 T))
-    (with-input-from-string(s ":dummy")
+#?(let ((*read-suppress* T))
+    (with-input-from-string (s ":dummy")
       (read-with-null-package s)))
 => NIL
 
 ; `*read-eval*`
 ; If `*read-eval*` is true, read form is evaluated.
 ; In this case, standard common lisp readtable is used.
-#?(let((*read-eval*
-	 T))
-    (with-input-from-string(s "#.(+ 1 2 3)")
+#?(let ((*read-eval* T))
+    (with-input-from-string (s "#.(+ 1 2 3)")
       (read-with-null-package s)))
 => 6
 
-#?(let((*read-eval* t))
-    (with-input-from-string(s "#.:error")
+#?(let ((*read-eval* t))
+    (with-input-from-string (s "#.:error")
       (read-with-null-package s)))
 => :ERROR
 ,:test eq
 
 ; If `*read-eval*` is NIL, an error is signaled.
-#?(let((*read-eval* nil))
-    (with-input-from-string(s "#.:error")
+#?(let ((*read-eval* nil))
+    (with-input-from-string (s "#.:error")
       (read-with-null-package s)))
 :signals error
 
@@ -156,95 +154,95 @@
 
 ;;; Symbols.
 ; Even if prefixed, uninterned.
-#?(with-input-from-string(s "null-package:read-with-null-package")
+#?(with-input-from-string (s "null-package:read-with-null-package")
     (read-with-null-package s))
 => #:READ-WITH-NULL-PACKAGE
 
 ; Internal symbols.
-#?(with-input-from-string(s "null-package::%read-with-null-package")
+#?(with-input-from-string (s "null-package::%read-with-null-package")
     (read-with-null-package s))
 => #:%READ-WITH-NULL-PACKAGE
 
 ; Even if specified non-existent package, works.
-#?(with-input-from-string(s "no-such-package:foo")
+#?(with-input-from-string (s "no-such-package:foo")
     (read-with-null-package s))
 => #:FOO
 
 ; Escaped.
-#?(with-input-from-string(s "foo\\bar")
+#?(with-input-from-string (s "foo\\bar")
     (read-with-null-package s))
-:satisfies (lambda($1)
+:satisfies (lambda ($1)
 	     (or ; Implementation dependent.
 	       (string-equal "#:|FOObAR|" (prin1-to-string $1))
 	       (string-equal "#:FOO\\bAR" (prin1-to-string $1))))
 
 ; Vertical bar escaped.
-#?(with-input-from-string(s "|foo|")
+#?(with-input-from-string (s "|foo|")
     (read-with-null-package s))
 => #:|foo|
 
 ; Uninterned.
-#?(with-input-from-string(s "#:foo")
+#?(with-input-from-string (s "#:foo")
     (read-with-null-package s))
 => #:FOO
 
 ;;; Lists.
-#?(with-input-from-string(s "(hoge)")
+#?(with-input-from-string (s "(hoge)")
     (read-with-null-package s))
 => (#:HOGE)
 
 ; Nested.
-#?(with-input-from-string(s "((hoge))")
+#?(with-input-from-string (s "((hoge))")
     (read-with-null-package s))
 => ((#:HOGE))
 
 ; Dotted.
-#?(with-input-from-string(s "(foo . bar)")
+#?(with-input-from-string (s "(foo . bar)")
     (read-with-null-package s))
 => (#:FOO . #:BAR)
 
 ;;; Vector.
-#?(with-input-from-string(s "#(hoge)")
+#?(with-input-from-string (s "#(hoge)")
     (read-with-null-package s))
 => #(#:HOGE)
 
 ;;; Array
-#?(with-input-from-string(s "#2A((a b)(c d))")
+#?(with-input-from-string (s "#2A((a b) (c d))")
     (read-with-null-package s))
-=> #2A((#:A #:B)(#:C #:D))
+=> #2A((#:A #:B) (#:C #:D))
 
 ;;; String
-#?(with-input-from-string(s "\"string\"")
+#?(with-input-from-string (s "\"string\"")
     (read-with-null-package s))
 => "string"
 ,:test string=
 
 ;;; Pathname
-#?(with-input-from-string(s "#P\"foo/bar\"")
+#?(with-input-from-string (s "#P\"foo/bar\"")
     (read-with-null-package s))
 => #P"foo/bar"
 ,:test equal
 
 ;;; Binary
-#?(with-input-from-string(s "#B1001")
+#?(with-input-from-string (s "#B1001")
     (read-with-null-package s))
 => 9
 ,:test eql
 
 ;;; Complex
-#?(with-input-from-string(s "#C(1.0 -3.2)")
+#?(with-input-from-string (s "#C(1.0 -3.2)")
     (read-with-null-package s))
 => #C(1.0 -3.2)
 ,:test =
 
 ;;; Octet
-#?(with-input-from-string(s "#o123")
+#?(with-input-from-string (s "#o123")
     (read-with-null-package s))
 => 83
 ,:test eql
 
 ;;; Radix
-#?(with-input-from-string(s "#9R123")
+#?(with-input-from-string (s "#9R123")
     (read-with-null-package s))
 => 102
 ,:test eql
@@ -256,52 +254,52 @@
 ,:ignore-signals warning ; <--- for clisp.
 ,:before (mapc #'fmakunbound '(copy-foo foo-p foo-bar (setf foo-bar) make-foo))
 
-#?(with-input-from-string(s "#S(foo :bar bazz)")
+#?(with-input-from-string (s "#S(foo :bar bazz)")
     (read-with-null-package s))
-:satisfies (lambda($result)
+:satisfies (lambda ($result)
 	     (& (foo-p $result)
 		(string-equal (prin1-to-string '#:BAZZ)
 			      (prin1-to-string (foo-bar $result)))))
 
 ;;; Hexadecimal.
-#?(with-input-from-string(s "#x123")
+#?(with-input-from-string (s "#x123")
     (read-with-null-package s))
 => 291
 ,:test eql
 
 ;;; Label.
-#?(with-input-from-string(s "(#0=hoge #0#)")
+#?(with-input-from-string (s "(#0=hoge #0#)")
     (read-with-null-package s))
 => (#0=#:HOGE #0#)
 
 ;;; Read time condition.
-#?(with-input-from-string(s "#+(and)(hoge)")
+#?(with-input-from-string (s "#+(and) (hoge)")
     (read-with-null-package s))
 => (#:HOGE)
-#?(with-input-from-string(s "#+(or)(hoge)")
+#?(with-input-from-string (s "#+(or) (hoge)")
     (read-with-null-package s))
 :signals end-of-file
-#?(with-input-from-string(s "#-(and)(hoge)")
+#?(with-input-from-string (s "#-(and) (hoge)")
     (read-with-null-package s))
 :signals end-of-file
-#?(with-input-from-string(s "#-(or)(hoge)")
+#?(with-input-from-string (s "#-(or) (hoge)")
     (read-with-null-package s))
 => (#:HOGE)
 
 ;;; Block comment.
-#?(with-input-from-string(s "#| block 
+#?(with-input-from-string (s "#| block 
 			    comment |#")
     (read-with-null-package s))
 :signals end-of-file
 
 ;;; NOTE
 ;; Quote.
-#?(with-input-from-string(s "'hoge")
+#?(with-input-from-string (s "'hoge")
     (read-with-null-package s))
 => (#:QUOTE #:HOGE)
 
 ;; Function.
-#?(with-input-from-string(s "#'car")
+#?(with-input-from-string (s "#'car")
     (read-with-null-package s))
 => (#:FUNCTION #:CAR)
 
@@ -309,28 +307,28 @@
 ; *rationale* In ANSI standard, backquote implementation is unspecified.
 ; Many lisp generate form in macro expansion time.
 ; But there is a lisp which generate form in read time. (e.g. CCL.)
-#?(with-input-from-string(s "`(hoge)")
+#?(with-input-from-string (s "`(hoge)")
     (read-with-null-package s))
 => `(#:HOGE)
 
-#?(with-input-from-string(s "`(hoge,(car '(a b c)))")
+#?(with-input-from-string (s "`(hoge,(car '(a b c)))")
     (read-with-null-package s))
-=> `(#:HOGE ,(#:CAR (#:QUOTE(#:A #:B #:C))))
+=> `(#:HOGE ,(#:CAR (#:QUOTE (#:A #:B #:C))))
 
-#?(with-input-from-string(s "`(hoge ,@(cdr '(a b c)))")
+#?(with-input-from-string (s "`(hoge ,@(cdr '(a b c)))")
     (read-with-null-package s))
-=> `(#:HOGE ,@(#:CDR (#:QUOTE(#:A #:B #:C))))
+=> `(#:HOGE ,@(#:CDR (#:QUOTE (#:A #:B #:C))))
 
-#?(with-input-from-string(s "( ; comment
+#?(with-input-from-string (s "( ; comment
 			       )")
     (read-with-null-package s))
 => NIL
 
-#?(with-input-from-string(s "( #|comment in paren. |#)")
+#?(with-input-from-string (s "( #|comment in paren. |#)")
     (read-with-null-package s))
 => NIL
 
-#?(with-input-from-string(s ":hoge")
+#?(with-input-from-string (s ":hoge")
     (read-with-null-package s nil #\h))
 => :HOGE
 
@@ -354,7 +352,7 @@
 ;;;; Affected By:
 ; `*read-base*`
 #?(num-notation-p "f") => NIL
-#?(let((*read-base* 16))
+#?(let ((*read-base* 16))
     (num-notation-p "f")) => T
 
 ;;;; Side-Effects:
@@ -439,7 +437,7 @@
 					 :max 1)
 				 (exponent (marker sign? digit+))
 				 (marker (or . #.(coerce "defslDEFSL" 'list)))))
-    (assert (num-notation-p notation)()
+    (assert (num-notation-p notation) ()
       "~S is not interpretted as number notation." notation))
 => NIL
 
@@ -496,52 +494,52 @@
 ;;;; Examples:
 
 ; When NIL, almost symbols are uninterned.
-#?(let((*only-junk-p* nil))
-    (with-input-from-string(s "car")
+#?(let ((*only-junk-p* nil))
+    (with-input-from-string (s "car")
       (read-with-null-package s)))
 => #:CAR
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
 ; When T, broken notation only uninterned.
-#?(let((*only-junk-p* T))
-    (with-input-from-string(s "car")
+#?(let ((*only-junk-p* T))
+    (with-input-from-string (s "car")
       (read-with-null-package s)))
 => CAR
 
-#?(let((*only-junk-p* T))
-    (with-input-from-string(s "no-such-package:foo")
+#?(let ((*only-junk-p* T))
+    (with-input-from-string (s "no-such-package:foo")
       (read-with-null-package s)))
 => #:FOO
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
-#?(let((*only-junk-p* T))
-    (with-input-from-string(s "null-package:not-external-symbol")
+#?(let ((*only-junk-p* T))
+    (with-input-from-string (s "null-package:not-external-symbol")
       (read-with-null-package s)))
 => #:NOT-EXTERNAL-SYMBOL
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
 ; When list, included package's target symbols are interned.
-#?(let((*only-junk-p* '(:null-package)))
-    (with-input-from-string(s "car")
+#?(let ((*only-junk-p* '(:null-package)))
+    (with-input-from-string (s "car")
       (read-with-null-package s)))
 => #:CAR
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
-#?(let((*only-junk-p* '(:cl)))
-    (with-input-from-string(s "car")
+#?(let ((*only-junk-p* '(:cl)))
+    (with-input-from-string (s "car")
       (read-with-null-package s)))
 => CAR
 
-#?(let((*only-junk-p* '(:null-package)))
-    (with-input-from-string(s "no-such-symbol-exists")
+#?(let ((*only-junk-p* '(:null-package)))
+    (with-input-from-string (s "no-such-symbol-exists")
       (read-with-null-package s)))
 => #:NO-SUCH-SYMBOL-EXISTS
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
 (requirements-about *TARGET-SYMBOLS*)
 
@@ -559,39 +557,39 @@
 ; This senses only when `*ONLY-JUNK-P*` is bound with packages.
 
 ;;;; Examples:
-#?(let((*only-junk-p* '(:null-package))
-       (*target-symbols* :external)) ; the default
-    (with-input-from-string(s "%read-with-null-package")
+#?(let ((*only-junk-p* '(:null-package))
+        (*target-symbols* :external)) ; the default
+    (with-input-from-string (s "%read-with-null-package")
       (read-with-null-package s)))
 => #:%READ-WITH-NULL-PACKAGE
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
-#?(let((*only-junk-p* '(:null-package))
-       (*target-symbols* :internal))
-    (with-input-from-string(s "%read-with-null-package")
+#?(let ((*only-junk-p* '(:null-package))
+        (*target-symbols* :internal))
+    (with-input-from-string (s "%read-with-null-package")
       (read-with-null-package s)))
 => NULL-PACKAGE::%READ-WITH-NULL-PACKAGE
 
-#?(let((*only-junk-p* '(:null-package))
-       (*target-symbols* :internal))
-    (with-input-from-string(s "car")
+#?(let ((*only-junk-p* '(:null-package))
+        (*target-symbols* :internal))
+    (with-input-from-string (s "car")
       (read-with-null-package s)))
 => #:CAR
-,:test (lambda($1 $2)
-	 (string= (prin1-to-string $1)(prin1-to-string $2)))
+,:test (lambda ($1 $2)
+	 (string= (prin1-to-string $1) (prin1-to-string $2)))
 
-#?(let((*only-junk-p* '(:null-package))
-       (*target-symbols* :present))
-    (with-input-from-string(s "car")
+#?(let ((*only-junk-p* '(:null-package))
+        (*target-symbols* :present))
+    (with-input-from-string (s "car")
       (read-with-null-package s)))
 => CAR
 
 ;;;; NOTE
 ; :internal includes :external.
-#?(let((*only-junk-p* '(:null-package))
-       (*target-symbols* :internal))
-    (with-input-from-string(s "read-with-null-package")
+#?(let ((*only-junk-p* '(:null-package))
+        (*target-symbols* :internal))
+    (with-input-from-string (s "read-with-null-package")
       (read-with-null-package s)))
 => READ-WITH-NULL-PACKAGE
 
