@@ -13,7 +13,7 @@ In such cases, not interning, just making symbol (i.e. uninterned symbol) is use
 ## Usage
 
 ```lisp
-(with-input-from-string(s "hoge")
+(with-input-from-string (s "hoge")
   (read-with-null-package s))
 => #:HOGE
 ```
@@ -70,7 +70,7 @@ If you want more strict one for security reason, [SAFE-READ](https://github.com/
 
 ```lisp
 (let ((*only-junk-p* t))
-  (with-input-from-string(s "(car (cdr (list a b no-such-package:c)))")
+  (with-input-from-string (s "(car (cdr (list a b no-such-package:c)))")
     (read-with-null-package s)))
 => (CAR (CDR (LIST A B #:C)))
 
@@ -78,7 +78,7 @@ If you want more strict one for security reason, [SAFE-READ](https://github.com/
 
 (let ((*terget-symbols* :external) ; The default though.
       (*only-junk-p* '(:test)))
-  (with-input-from-string(s "(car (cdr (list a b no-such-package:c)))")
+  (with-input-from-string (s "(car (cdr (list a b no-such-package:c)))")
     (read-with-null-package s)))
 => (CAR (CDR (#:LIST #:A #:B #:C)))
 ```
@@ -87,8 +87,8 @@ If you want more strict one for security reason, [SAFE-READ](https://github.com/
 In fact, ideal syntax was like below.
 
 ```lisp
-(let((*package*(find-package :null)))
-  (with-input-from-string(s "hoge")
+(let ((*package* (find-package :null)))
+  (with-input-from-string (s "hoge")
     (read s)))
 ```
 But there is no portable way to set default reader to readtable.
@@ -102,8 +102,8 @@ MIT
 ### Developed with
 SBCL
 ### Tested with
-* SBCL/2.0.0
-* CCL/1.11.5
+* SBCL/2.0.2
+* CCL/1.12
 * CLISP/2.49
 * ECL/16.1.3
 
