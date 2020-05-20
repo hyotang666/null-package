@@ -461,17 +461,8 @@
 #?(num-notation-p "") => NIL
 #?(read-from-string "") :signals end-of-file
 
-; ECL treats "+." as 0, but others.
-#.(or #+ecl
-      (if(symbolp '+.)
-	`(warn "ECL impl bug was fixed, fix spec file.")
-	`(warn "ECL impl bug. Ansi require `+.` is symbol, but ~S"'+.))
-      '#?(num-notation-p "+.") => NIL)
-#.(or #+ecl
-      (if(symbolp '-.)
-	`(warn "ECL impl bug was fixed, fix spec file.")
-	`(warn "ECL impl bug. Ansi require `-.` is symbol, but ~S"'-.))
-      '#?(num-notation-p "-.") => NIL)
+'#?(num-notation-p "+.") => NIL
+'#?(num-notation-p "-.") => NIL
 
 (requirements-about *ONLY-JUNK-P*)
 
