@@ -87,8 +87,8 @@
                ;; Invalid.
                ((or (not (find-package package))
                     (not
-                      (eq
-                       :external (nth-value 1 (find-symbol symbol package)))))
+                      (eq :external (nth-value 1
+                                               (find-symbol symbol package)))))
                 (make-symbol symbol))
                (t (symbol<=name symbol (find-package package)))))
         (2
