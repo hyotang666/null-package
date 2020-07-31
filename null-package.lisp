@@ -271,37 +271,41 @@
 
 (defun |paren-reader| (stream character)
   (declare (ignore character))
-  (do ((char (peek-char t stream) (peek-char t stream))
-       (acc))
-      ((char= #\) char)
-       (read-char stream) ; discard close paren.
-       (nreverse acc))
-    (case char
-      (#\( ; nested.
-       (push (|paren-reader| stream (read-char stream)) acc))
-      (#\. ; dot list.
-       (read-char stream) ; discard #\. character.
-       (let* ((elt (read-with-null-package stream t t t))
-              (char (peek-char t stream)))
-         (if (char= #\) char)
-             (return (nreconc acc elt))
-             (let ((macro-char (get-macro-character char)))
-               (if macro-char
-                   (multiple-value-call
-                       (lambda (&optional (return nil suppliedp))
-                         (when (or return suppliedp)
-                           (error "More than one element follow . in list.")))
-                     (funcall macro-char stream (read-char stream)))
-                   (error "More than one element follow . in list."))))))
-      (otherwise
-       (let ((macro-char (get-macro-character char)))
-         (if macro-char
-             (multiple-value-call
-                 (lambda (&optional (return nil suppliedp))
-                   (when (or return suppliedp)
-                     (push return acc)))
-               (funcall macro-char stream (read-char stream)))
-             (push (read-with-null-package stream t t t) acc)))))))
+  (flet ((call-with-macro-char (reader-macro thunk)
+           (multiple-value-call
+               (lambda (&optional (return nil suppliedp) &rest noise)
+                 (declare (ignore noise))
+                 (when (or return suppliedp)
+                   (funcall thunk return)))
+             (funcall reader-macro stream (read-char stream)))))
+    (do ((char (peek-char t stream) (peek-char t stream))
+         (acc))
+        ((char= #\) char)
+         (read-char stream) ; discard close paren.
+         (nreverse acc))
+      (case char
+        (#\( ; nested.
+         (push (|paren-reader| stream (read-char stream)) acc))
+        (#\. ; dot list.
+         (read-char stream) ; discard #\. character.
+         (let* ((elt (read-with-null-package stream t t t))
+                (char (peek-char t stream)))
+           (if (char= #\) char)
+               (return (nreconc acc elt))
+               (let ((macro-char (get-macro-character char)))
+                 (if macro-char
+                     (call-with-macro-char macro-char
+                                           (lambda (return)
+                                             (declare (ignore return))
+                                             (error
+                                               "More than one element follow . in list.")))
+                     (error "More than one element follow . in list."))))))
+        (otherwise
+         (let ((macro-char (get-macro-character char)))
+           (if macro-char
+               (call-with-macro-char macro-char
+                                     (lambda (return) (push return acc)))
+               (push (read-with-null-package stream t t t) acc))))))))
 
 ;;;; DISPATCH-MACRO-CHARACTERS
 
