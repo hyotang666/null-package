@@ -8,6 +8,8 @@
 
 (in-package :null-package)
 
+(declaim (optimize speed))
+
 ;;;; VARIABLES
 
 (declaim (type (or (eql t) null cons) *only-junk-p*))
@@ -68,22 +70,23 @@
     (let* ((pred (core-reader:char-pred #\:))
            (package (convert-case (core-reader:read-string-till pred)))
            (collons
-            (core-reader:read-string-till (complement pred) *standard-input*
-                                          nil ""))
-           (symbol))
-      (if (string= collons "")
-          (shiftf symbol package "")
-          (setf symbol (convert-case (read-as-string:read-as-string))))
+            (core-reader:read-string-till (lambda (c) (not (funcall pred c)))
+                                          *standard-input* nil ""))
+           (symbol
+            (if (equal "" collons)
+                (prog1 package (setf package ""))
+                (convert-case (read-as-string:read-as-string)))))
+      (declare (type simple-string collons symbol))
       (case (length collons)
         (0
-         (assert (string= package ""))
+         (assert (equal package ""))
          (cond ;; boolean.
                ((member symbol '(nil t) :test #'string=)
                 (values (intern symbol)))
                (t (symbol<=name symbol))))
         (1
          (cond ;; Keyword
-               ((string= "" package) (values (intern symbol :keyword)))
+               ((equal "" package) (values (intern symbol :keyword)))
                ;; Invalid.
                ((or (not (find-package package))
                     (not
@@ -93,11 +96,15 @@
                (t (symbol<=name symbol (find-package package)))))
         (2
          (cond ;; Keyword
-               ((string= "" package) (values (intern symbol :keyword)))
+               ((equal "" package) (values (intern symbol :keyword)))
                ;; Invalid
                ((not (find-package package)) (make-symbol symbol))
                (t (symbol<=name symbol (find-package package)))))
         (otherwise (make-symbol symbol))))))
+
+(declaim
+ (ftype (function (simple-string &optional package) (values symbol &optional))
+        symbol<=name))
 
 (defun symbol<=name (name &optional (*package* *package*))
   (etypecase *only-junk-p*
@@ -151,6 +158,10 @@
       (char-upcase char)
       (char-downcase char)))
 
+(declaim
+ (ftype (function (simple-string) (values simple-string &optional))
+        convert-case))
+
 (defun convert-case (string)
   ;; NOTE: Escape chars (not escaped chars) are removed.
   (flet ((convert-all (converter)
@@ -190,6 +201,9 @@
 ;;; float := [ sign? digit* . digit+ (exponent-marker sign? digit+)?
 ;;;          | sign? digit+ ( . digit*)? (exponent-marker sign? digit+) ]
 
+(declaim
+ (ftype (function (simple-string) (values boolean &optional)) num-notation-p))
+
 (defun num-notation-p (string &aux (length (length string)))
   (labels ((sign? (index)
              (member? index "+-"))
@@ -212,6 +226,8 @@
            (skip-digit (from)
              (call-with-check-bounds from
                                      (lambda (index)
+                                       ;; due to sbcl could not infer.
+                                       (declare (optimize (speed 1)))
                                        (position-if-not
                                          (lambda (char)
                                            (digit-char-p char *read-base*))
@@ -258,10 +274,17 @@
            (digit-string? (index)
              (call-with-check-bounds index
                                      (lambda (index)
-                                       (loop :for i :upfrom index :below length
+                                       (loop :for i
+                                                  :of-type (mod
+                                                             #.array-total-size-limit)
+                                                  :upfrom index :below length
                                              :always (digit-char-p
                                                        (char string i)
                                                        *read-base*))))))
+    (declare
+      (ftype (function ((mod #.array-total-size-limit) function)
+              (values t &optional))
+             call-with-check-bounds))
     (if (sign? 0)
         (is-first-digit? 1) ; skip sign.
         (is-first-digit? 0))))
@@ -280,7 +303,8 @@
                  (declare (ignore noise))
                  (when (or return suppliedp)
                    (funcall thunk return)))
-             (funcall reader-macro stream (read-char stream)))))
+             (funcall (coerce reader-macro 'function) stream
+                      (read-char stream)))))
     (do ((char (peek-char t stream) (peek-char t stream))
          (acc))
         ((char= #\) char)
@@ -320,7 +344,7 @@
   (declare (ignore number character))
   (let ((structure (progn (read-char stream) (read stream)))
         (args (|paren-reader| stream #\()))
-    (apply (intern (format nil "MAKE-~A" structure)) args)))
+    (apply (coerce (intern (format nil "MAKE-~A" structure)) 'function) args)))
 
 (defun |#=reader| (stream character number)
   (declare (ignore character))
@@ -373,9 +397,8 @@
 
 (defun |`reader| (stream character)
   (let ((*readtable* (copy-readtable nil)))
-    (values
-      (read-from-string
-        (format nil "~C~A" character (read-with-replace-token stream))))))
+    (values (read-from-string
+              (format nil "~C~A" character (read-with-replace-token stream))))))
 
 (defun read-with-replace-token (&optional (*standard-input* *standard-input*))
   (let ((*readtable* (named-readtables:find-readtable 'replacer))
@@ -446,30 +469,31 @@
 
 ;;;; NAMED-READTABLE
 
-(named-readtables:defreadtable replacer
-  (:merge read-as-string:as-string)
-  (:macro-char #\( '|paren-replacer|)
-  (:macro-char #\` '|`replacer|)
-  (:macro-char #\, '|,replacer|)
-  (:macro-char #\' '|'replacer|))
-
-(let ((*readtable* (named-readtables:find-readtable 'replacer)))
-  (read-as-string:set-dispatcher #\( '|#paren-replacer|)
-  (read-as-string:set-dispatcher #\S '|#sreplacer|)
-  (read-as-string:set-dispatcher #\A '|#areplacer|)
-  (read-as-string:set-dispatcher #\' '|#'replacer|))
-
-(named-readtables:defreadtable null-package
-  (:merge :common-lisp)
-  (:macro-char #\( '|paren-reader|)
-  (:macro-char #\' '|'reader|)
-  #+(or clisp ecl)
-  (:macro-char #\` '|`reader|)
-  (:dispatch-macro-char #\# #\( '|#paren-reader|)
-  (:dispatch-macro-char #\# #\S '|#sreader|)
-  (:dispatch-macro-char #\# #\= '|#=reader|)
-  (:dispatch-macro-char #\# #\# '|##reader|)
-  (:dispatch-macro-char #\# #\+ '|#+reader|)
-  (:dispatch-macro-char #\# #\- '|#-reader|)
-  (:dispatch-macro-char #\# #\' '|#'reader|)
-  (:dispatch-macro-char #\# #\. '|#.reader|))
+(locally
+ ;; out of responds.
+ (declare (optimize (speed 1)))
+ (named-readtables:defreadtable replacer
+   (:merge read-as-string:as-string)
+   (:macro-char #\( '|paren-replacer|)
+   (:macro-char #\` '|`replacer|)
+   (:macro-char #\, '|,replacer|)
+   (:macro-char #\' '|'replacer|))
+ (let ((*readtable* (named-readtables:find-readtable 'replacer)))
+   (read-as-string:set-dispatcher #\( '|#paren-replacer|)
+   (read-as-string:set-dispatcher #\S '|#sreplacer|)
+   (read-as-string:set-dispatcher #\A '|#areplacer|)
+   (read-as-string:set-dispatcher #\' '|#'replacer|))
+ (named-readtables:defreadtable null-package
+   (:merge :common-lisp)
+   (:macro-char #\( '|paren-reader|)
+   (:macro-char #\' '|'reader|)
+   #+(or clisp ecl)
+   (:macro-char #\` '|`reader|)
+   (:dispatch-macro-char #\# #\( '|#paren-reader|)
+   (:dispatch-macro-char #\# #\S '|#sreader|)
+   (:dispatch-macro-char #\# #\= '|#=reader|)
+   (:dispatch-macro-char #\# #\# '|##reader|)
+   (:dispatch-macro-char #\# #\+ '|#+reader|)
+   (:dispatch-macro-char #\# #\- '|#-reader|)
+   (:dispatch-macro-char #\# #\' '|#'reader|)
+   (:dispatch-macro-char #\# #\. '|#.reader|)))
