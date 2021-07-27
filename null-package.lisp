@@ -145,6 +145,12 @@
             (unless (eq boolean (upper-case-p c))
               (return nil)))))))
 
+(defun char-swapcase (char)
+  (declare (optimize (speed 1))) ; due to type uncertainty.
+  (if (lower-case-p char)
+      (char-upcase char)
+      (char-downcase char)))
+
 (defun convert-case (string)
   ;; NOTE: Escape chars (not escaped chars) are removed.
   (flet ((convert-all (converter)
@@ -177,12 +183,6 @@
          (if (always-same-case-p string)
              #'char-swapcase
              #'identity))))))
-
-
-(defun char-swapcase (char)
-  (if (lower-case-p char)
-      (char-upcase char)
-      (char-downcase char)))
 
 ;;; BNF
 ;;; int := sign? digit+ .?
