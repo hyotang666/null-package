@@ -5,11 +5,12 @@
   :author "SATO Shinichi"
   :license "MIT"
   :description "Safe and robust S-Expression reader. Useful to read from unfailthfull stream/socket."
+  :source-control (:git "git@github.com:hyotang666/null-package")
+  :bug-tracker "https://github.com/hyotang666/null-package/issues"
   :depends-on
   (
    "read-as-string"     ; Reading one s-expression as string.
    "alexandria"         ; Public domain utilities, especially for FEATUREP.
-   "uiop"               ; Utilities.
    "core-reader"        ; Utilities for stream oriented functions.
    "named-readtables"   ; Readtable manager.
    )
