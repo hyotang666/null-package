@@ -587,25 +587,24 @@
 (requirements-about ALWAYS-SAME-CASE-P :doc-type function)
 
 ;;;; Description:
-; Test all char of LIST is same case.
+; Test all char of STRING is same case.
 
 #+syntax
-(ALWAYS-SAME-CASE-P list) ; => result
+(ALWAYS-SAME-CASE-P string) ; => result
 
-#?(ALWAYS-SAME-CASE-P (COERCE "alwayslowercase" 'LIST)) => T
-#?(ALWAYS-SAME-CASE-P (COERCE "ALWAYSUPPERCASE" 'LIST)) => T
-#?(ALWAYS-SAME-CASE-P (COERCE "not alpha char is skipped." 'LIST)) => T
-#?(ALWAYS-SAME-CASE-P (COERCE "+" 'LIST)) => T
-#?(ALWAYS-SAME-CASE-P NIL) => T
-#?(ALWAYS-SAME-CASE-P (COERCE "This Return Nil" 'LIST)) => NIL
+#?(ALWAYS-SAME-CASE-P "alwayslowercase") => T
+#?(ALWAYS-SAME-CASE-P "ALWAYSUPPERCASE") => T
+#?(ALWAYS-SAME-CASE-P "not alpha char is skipped.") => T
+#?(ALWAYS-SAME-CASE-P "+") => T
+#?(ALWAYS-SAME-CASE-P "") => T
+#?(ALWAYS-SAME-CASE-P "This Return Nil") => NIL
+#?(always-same-case-p "\\Escape is ignored.") => T
+#?(always-same-case-p "multiple |ESCAPE| also ignored.") => T
 
 ;;;; Arguments and Values:
 
-; list := LIST, otherwise error.
-#?(ALWAYS-SAME-CASE-P :NOT-LIST) :signals TYPE-ERROR
-
-; Every elt must character.
-#?(always-same-case-p '(not character elt)) :signals type-error
+; string := STRING, otherwise error.
+#?(ALWAYS-SAME-CASE-P :NOT-STRING) :signals condition
 
 ; result := boolean
 
@@ -615,7 +614,7 @@
 
 ;;;; Notes:
 ; When character is not ascii, unspecified.
-#?(ALWAYS-SAME-CASE-P (COERCE "アスキー以外は未定義" 'LIST)) => UNSPECIFIED
+#?(ALWAYS-SAME-CASE-P "アスキー以外は未定義") => UNSPECIFIED
 
 ;;;; Exceptional-Situations:
 

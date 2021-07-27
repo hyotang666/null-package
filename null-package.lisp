@@ -110,6 +110,41 @@
          (when (targetp status)
            (return symbol)))))))
 
+(defmacro do-string ((var string &optional return) &body body)
+  "Like DOLIST but for STRING. Escaped chars are ignored."
+  (let ((s (gensym "STRING")) (i (gensym "INDEX")) (c (gensym "CHAR")))
+    `(do ((,s ,string)
+          (,i 0))
+         ((not (array-in-bounds-p ,s ,i)) ,return)
+       (case (char ,s ,i)
+         (#\\ ; single escape.
+          (incf ,i 2))
+         (#\| ; multiple escape.
+          (incf ,i)
+          (do ((,c (char ,s ,i) (char ,s ,i)))
+              ((char= #\| ,c) (incf ,i))
+            (case ,c
+              (#\\ ; single escape
+               (incf ,i 2))
+              (otherwise (incf ,i)))))
+         (otherwise
+          (let ((,var (char ,s ,i)))
+            (tagbody ,@body))
+          (incf ,i))))))
+
+(declaim
+ (ftype (function (simple-string) (values boolean &optional))
+        always-same-case-p))
+
+(defun always-same-case-p (string)
+  (if (equal "" string)
+      t
+      (let ((boolean (upper-case-p (char string 0))))
+        (do-string (c string t)
+          (when (alpha-char-p c)
+            (unless (eq boolean (upper-case-p c))
+              (return nil)))))))
+
 (defun convert-case (string)
   (flet ((convert-all (converter)
            (uiop:reduce/strcat
@@ -139,42 +174,10 @@
       (:preserve (convert-all #'identity))
       (:invert
        (convert-all
-         (if (always-same-case-p (remove-escape string))
+         (if (always-same-case-p string)
              #'char-swapcase
              #'identity))))))
 
-(defun always-same-case-p (list)
-  (labels ((rec (list boolean)
-             (if (endp list)
-                 t
-                 (body (car list) (cdr list) boolean)))
-           (body (char rest boolean)
-             (cond ;; Skip
-                   ((not (alpha-char-p char)) (rec rest boolean))
-                   ((eq (lower-case-p char) boolean) (rec rest boolean))
-                   (t nil))))
-    (let ((position (position-if #'alpha-char-p list)))
-      (if (null position)
-          t
-          (rec (nthcdr (1+ position) list)
-               (lower-case-p (nth position list)))))))
-
-(defun remove-escape (string)
-  (uiop:while-collecting (acc)
-    (do ((index 0))
-        ((not (array-in-bounds-p string index)))
-      (case (char string index)
-        (#\\ ; single escape.
-         (incf index 2))
-        (#\| ; multiple escape.
-         (incf index)
-         (do ((char (char string index) (char string index)))
-             ((char= #\| char) (incf index))
-           (case char
-             (#\\ ; single escape
-              (incf index 2))
-             (otherwise (incf index)))))
-        (otherwise (acc (char string index)) (incf index))))))
 
 (defun char-swapcase (char)
   (if (lower-case-p char)
