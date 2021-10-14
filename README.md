@@ -3,14 +3,16 @@ Safe and robust S-Expression reader. Useful to read from unfailthfull stream/soc
 
 ## Alternatives and differences.
 
-|                 | [safe-read] | null-package |
-| ---             | ----------- | ------------ |
-| NIL             | \*          | \*           |
-| ()              | ERROR       | \*           |
-| Read macro      | ERROR       | \*           |
-| Prefixed symbol | ERROR       | Can control  |
+|                 | [safe-read] | [eclector]  | null-package |
+| ---             | ----------- | ----------- | ------------ |
+| NIL             | \*          | \*          | \*           |
+| ()              | ERROR       | \*          | \*           |
+| Read macro      | ERROR       | \*          | \*           |
+| Prefixed symbol | ERROR       | Can recover | Can control  |
+| Backquote       | ERROR       | Its own     | Impl own     |
 
 [SAFE-READ]: https://github.com/phoe/safe-read
+[ECLECTOR]: https://github.com/s-expressionists/Eclector
 
 NULL-PACKAGE aims to be used for static analyzing rather than security.
 If you want more strict one for security reason, [SAFE-READ] is recommended.
