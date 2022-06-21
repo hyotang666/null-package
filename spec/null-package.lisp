@@ -309,15 +309,15 @@
 ; But there is a lisp which generate form in read time. (e.g. CCL.)
 #?(with-input-from-string (s "`(hoge)")
     (read-with-null-package s))
-=> `(#:HOGE)
+:equivalents (read-from-string "`(#:hoge)")
 
 #?(with-input-from-string (s "`(hoge,(car '(a b c)))")
     (read-with-null-package s))
-=> `(#:HOGE ,(#:CAR (#:QUOTE (#:A #:B #:C))))
+:equivalents (read-from-string " `(#:HOGE ,(#:CAR (#:QUOTE (#:A #:B #:C))))")
 
 #?(with-input-from-string (s "`(hoge ,@(cdr '(a b c)))")
     (read-with-null-package s))
-=> `(#:HOGE ,@(#:CDR (#:QUOTE (#:A #:B #:C))))
+:equivalents (read-from-string "`(#:HOGE ,@(#:CDR (#:QUOTE (#:A #:B #:C))))")
 
 #?(with-input-from-string (s "( ; comment
 			       )")
